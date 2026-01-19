@@ -1,0 +1,23 @@
+# Polymarket Price Monitor Configuration
+
+monitoring:
+  # How often to check prices (in seconds)
+  poll_interval_seconds: 300  # 5 minutes
+
+  # Minimum price change to trigger alert (percentage)
+  price_change_threshold_percent: 3.0
+
+  # Minimum volume filter (USD) - set to 0 for all markets
+  min_volume_usd: 0
+
+telegram:
+  # Enable/disable Telegram notifications
+  enabled: true
+
+api:
+  # Polymarket API endpoints
+  gamma_url: https://gamma-api.polymarket.com
+  clob_url: https://clob.polymarket.com
+
+  # Number of markets to fetch per API request
+  page_size: 100
