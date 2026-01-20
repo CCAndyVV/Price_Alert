@@ -1,5 +1,6 @@
 """Polymarket API client for fetching market data and prices."""
 
+import json
 import logging
 import time
 from typing import List, Optional, Dict, Any
@@ -97,14 +98,27 @@ class PolymarketClient:
             if not market_id:
                 return None
 
-            # Get CLOB token IDs if available (for future CLOB API usage)
-            clob_token_ids = data.get("clobTokenIds", [])
+            # Parse outcomes (may be JSON string or list)
+            outcomes_raw = data.get("outcomes", [])
+            if isinstance(outcomes_raw, str):
+                try:
+                    outcomes = json.loads(outcomes_raw)
+                except json.JSONDecodeError:
+                    outcomes = ["Yes", "No"]
+            else:
+                outcomes = outcomes_raw if outcomes_raw else ["Yes", "No"]
 
-            # Parse outcomes and prices
-            outcomes = data.get("outcomes", [])
-            outcome_prices_str = data.get("outcomePrices", [])
+            # Parse outcome prices (may be JSON string or list)
+            outcome_prices_raw = data.get("outcomePrices", [])
+            if isinstance(outcome_prices_raw, str):
+                try:
+                    outcome_prices_str = json.loads(outcome_prices_raw)
+                except json.JSONDecodeError:
+                    outcome_prices_str = []
+            else:
+                outcome_prices_str = outcome_prices_raw
 
-            # Convert prices from strings to floats
+            # Convert prices to floats
             outcome_prices = []
             for price in outcome_prices_str:
                 try:
@@ -132,7 +146,7 @@ class PolymarketClient:
                 question=data.get("question", "Unknown"),
                 slug=data.get("slug", ""),
                 volume=volume,
-                outcomes=outcomes if outcomes else ["Yes", "No"],
+                outcomes=outcomes,
                 outcome_prices=outcome_prices,
             )
 
@@ -232,7 +246,16 @@ class PolymarketClient:
         for market in markets:
             if market.slug in all_market_data:
                 market_data = all_market_data[market.slug]
-                outcome_prices_str = market_data.get("outcomePrices", [])
+                outcome_prices_raw = market_data.get("outcomePrices", [])
+
+                # Parse JSON string if needed
+                if isinstance(outcome_prices_raw, str):
+                    try:
+                        outcome_prices_str = json.loads(outcome_prices_raw)
+                    except json.JSONDecodeError:
+                        outcome_prices_str = []
+                else:
+                    outcome_prices_str = outcome_prices_raw
 
                 prices = []
                 for price in outcome_prices_str:
