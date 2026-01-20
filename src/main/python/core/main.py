@@ -46,7 +46,8 @@ def cli():
 @click.option("--volume", "-v", default=0.0, help="Minimum volume filter (USD)")
 @click.option("--interval", "-i", default=300, help="Poll interval in seconds")
 @click.option("--config", "-c", default=None, help="Path to config file")
-def start(threshold: float, volume: float, interval: int, config: str):
+@click.option("--no-telegram", is_flag=True, help="Disable Telegram notifications (console only)")
+def start(threshold: float, volume: float, interval: int, config: str, no_telegram: bool):
     """Start the price monitor."""
     logger.info("Starting Polymarket Price Monitor...")
 
@@ -58,6 +59,8 @@ def start(threshold: float, volume: float, interval: int, config: str):
     cfg.price_change_threshold_percent = threshold
     cfg.min_volume_usd = volume
     cfg.poll_interval_seconds = interval
+    if no_telegram:
+        cfg.telegram_enabled = False
 
     # Validate configuration
     errors = cfg.validate()
@@ -76,6 +79,8 @@ def start(threshold: float, volume: float, interval: int, config: str):
             logger.error("Failed to connect to Telegram. Check your bot token.")
             sys.exit(1)
         logger.info("Telegram connection successful")
+    else:
+        logger.info("Telegram disabled - alerts will be printed to console only")
 
     # Initialize price monitor
     monitor = PriceMonitor(
@@ -117,6 +122,15 @@ def start(threshold: float, volume: float, interval: int, config: str):
                     sent = notifier.send_alerts_batch(alerts)
                     total_alerts_sent += sent
                     logger.info(f"Sent {sent} alert(s) to Telegram")
+                else:
+                    # Print alerts to console when Telegram is disabled
+                    click.echo(f"\n{'='*60}")
+                    click.echo(f"PRICE ALERTS ({len(alerts)} markets)")
+                    click.echo(f"{'='*60}\n")
+                    for alert in alerts:
+                        click.echo(alert.format_message())
+                        click.echo("")
+                    total_alerts_sent += len(alerts)
 
                 # Reset baselines for alerted markets
                 monitor.reset_baselines(alerts)
