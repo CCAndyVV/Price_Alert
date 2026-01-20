@@ -92,15 +92,13 @@ class PolymarketClient:
     def _parse_market(self, data: Dict[str, Any]) -> Optional[Market]:
         """Parse market data from API response."""
         try:
-            # Extract token IDs (markets can have multiple tokens for Yes/No)
-            tokens = data.get("tokens", [])
-            if not tokens:
+            # Use market ID as primary identifier
+            market_id = str(data.get("id", ""))
+            if not market_id:
                 return None
 
-            # Use the first token ID as primary identifier
-            token_id = tokens[0].get("token_id", "")
-            if not token_id:
-                return None
+            # Get CLOB token IDs if available (for future CLOB API usage)
+            clob_token_ids = data.get("clobTokenIds", [])
 
             # Parse outcomes and prices
             outcomes = data.get("outcomes", [])
@@ -114,9 +112,13 @@ class PolymarketClient:
                 except (ValueError, TypeError):
                     outcome_prices.append(0.0)
 
-            # Get volume (might be in different fields)
+            # Skip markets without valid prices
+            if not outcome_prices or all(p == 0.0 for p in outcome_prices):
+                return None
+
+            # Get volume (prefer volumeNum for accuracy)
             volume = 0.0
-            for vol_field in ["volume", "volumeNum", "volume24hr"]:
+            for vol_field in ["volumeNum", "volume", "volume24hr"]:
                 if vol_field in data:
                     try:
                         volume = float(data[vol_field])
@@ -125,13 +127,13 @@ class PolymarketClient:
                         continue
 
             return Market(
-                token_id=token_id,
+                token_id=market_id,
                 condition_id=data.get("conditionId", ""),
                 question=data.get("question", "Unknown"),
                 slug=data.get("slug", ""),
                 volume=volume,
                 outcomes=outcomes if outcomes else ["Yes", "No"],
-                outcome_prices=outcome_prices if outcome_prices else [0.0, 0.0],
+                outcome_prices=outcome_prices,
             )
 
         except Exception as e:
