@@ -112,15 +112,15 @@ class TelegramNotifier:
         return sent
 
     def _format_batch_message(self, alerts: List[PriceAlert]) -> str:
-        """Format multiple alerts into a single message."""
-        lines = ["🚨 PRICE ALERTS SUMMARY\n"]
+        """Format multiple alerts into a single message (HTML format)."""
+        lines = ["🚨 <b>PRICE ALERTS SUMMARY</b>\n"]
 
         for alert in alerts:
             sign = "+" if alert.change_percent > 0 else ""
             emoji = alert.direction_emoji
             lines.append(
-                f"{emoji} {alert.market.question[:50]}...\n"
-                f"   {alert.outcome}: {alert.old_price:.2f} → {alert.new_price:.2f} ({sign}{alert.change_percent:.1f}%)\n"
+                f"{emoji} <a href=\"{alert.market.market_url}\">{alert.market.question[:50]}...</a>\n"
+                f"   {alert.outcome}: {alert.old_price:.2f} → {alert.new_price:.2f} (<b>{sign}{alert.change_percent:.1f}%</b>)\n"
             )
 
         lines.append(f"\n📊 Total: {len(alerts)} market(s) with significant moves")

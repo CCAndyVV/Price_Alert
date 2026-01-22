@@ -39,13 +39,13 @@ class PriceAlert:
         return "➡️"
 
     def format_message(self) -> str:
-        """Format alert as a readable message."""
+        """Format alert as a readable message (HTML format for Telegram)."""
         sign = "+" if self.change_percent > 0 else ""
         return (
-            f"🚨 PRICE ALERT\n\n"
+            f"🚨 <b>PRICE ALERT</b>\n\n"
             f"📊 {self.market.question}\n"
-            f"{self.direction_emoji} Outcome: {self.outcome}\n"
-            f"💰 Price: {self.old_price:.2f} → {self.new_price:.2f} ({sign}{self.change_percent:.1f}%)\n"
+            f"{self.direction_emoji} Outcome: <b>{self.outcome}</b>\n"
+            f"💰 Price: {self.old_price:.2f} → {self.new_price:.2f} (<b>{sign}{self.change_percent:.1f}%</b>)\n"
             f"📊 Volume: ${self.market.volume:,.0f}\n\n"
-            f"🔗 {self.market.market_url}"
+            f"🔗 <a href=\"{self.market.market_url}\">View on Polymarket</a>"
         )
