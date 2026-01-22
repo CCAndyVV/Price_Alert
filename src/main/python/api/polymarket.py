@@ -140,6 +140,12 @@ class PolymarketClient:
                     except (ValueError, TypeError):
                         continue
 
+            # Extract event slug for correct Polymarket URL
+            event_slug = None
+            events = data.get("events", [])
+            if events and isinstance(events, list) and len(events) > 0:
+                event_slug = events[0].get("slug", "")
+
             return Market(
                 token_id=market_id,
                 condition_id=data.get("conditionId", ""),
@@ -148,6 +154,7 @@ class PolymarketClient:
                 volume=volume,
                 outcomes=outcomes,
                 outcome_prices=outcome_prices,
+                event_slug=event_slug,
             )
 
         except Exception as e:
